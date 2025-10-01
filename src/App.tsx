@@ -7,20 +7,17 @@ import { PropertyDetailPage } from './pages/PropertyDetailPage';
 import { FavoritesPage } from './pages/FavoritesPage';
 import { DashboardPage } from './pages/DashboardPage';
 
-const AppContent: React.FC = () => {
-  const [walletConnected, setWalletConnected] = useState(false);
+import { WalletProvider, useWallet } from "./components/Wallet/WalletContext";
+import { WalletModal } from "./components/Wallet/WalletModal";
+
+
+const AppContent: React.FC<{ onOpenWalletModal: () => void }> = ({ onOpenWalletModal }) => {
   const [favorites, setFavorites] = useState(['1', '4']);
+  const { account } = useWallet();
   const navigate = useNavigate();
 
-  const handleConnectWallet = () => {
-    // Mock wallet connection with animation
-    setTimeout(() => {
-      setWalletConnected(!walletConnected);
-    }, 1000);
-  };
-
   const handleToggleFavorite = (propertyId: string) => {
-    setFavorites(prev => 
+    setFavorites(prev =>
       prev.includes(propertyId)
         ? prev.filter(id => id !== propertyId)
         : [...prev, propertyId]
@@ -34,8 +31,8 @@ const AppContent: React.FC = () => {
   return (
     <>
       <Navbar 
-        onConnectWallet={handleConnectWallet}
-        walletConnected={walletConnected}
+        onConnectWallet={onOpenWalletModal}
+        walletConnected={!!account}
       />
       
       <Routes>
@@ -75,8 +72,8 @@ const AppContent: React.FC = () => {
           path="/dashboard" 
           element={
             <DashboardPage 
-              walletConnected={walletConnected}
-              onConnectWallet={handleConnectWallet}
+              walletConnected={!!account}
+              onConnectWallet={onOpenWalletModal}
             />
           } 
         />
@@ -86,9 +83,17 @@ const AppContent: React.FC = () => {
 };
 
 function App() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
     <Router>
-      <AppContent />
+      <WalletProvider>
+        <div className="p-8">
+          <WalletModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+
+          <AppContent onOpenWalletModal={() => setIsModalOpen(true)} />
+        </div>
+      </WalletProvider>
     </Router>
   );
 }
